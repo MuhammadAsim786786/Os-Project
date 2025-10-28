@@ -1,73 +1,44 @@
+# Makefile for OS Project (Server & Client)
+
 CC = gcc
-CFLAGS = -Wall -Wextra -pthread -g -I./src
-LDFLAGS = -pthread
+CFLAGS = -Wall -pthread -g
+TSAN_FLAGS = -fsanitize=thread -g -O1 -pthread
 
-# Directories
-SRC_DIR = src
-CLIENT_DIR = client
-BUILD_DIR = build
-STORAGE_DIR = storage
+SERVER_SRC = server/server.c
+CLIENT_SRC = client/client.c
+SERVER_BIN = server/server
+CLIENT_BIN = client/client
+SERVER_TSAN_BIN = server/server_tsan
 
-# Source files (only Task 1 for now)
-SERVER_SRC = $(SRC_DIR)/server.c $(SRC_DIR)/client_queue.c
-CLIENT_SRC = $(CLIENT_DIR)/client.c
+# Default target
+all: $(SERVER_BIN) $(CLIENT_BIN)
 
-# Object files
-SERVER_OBJ = $(BUILD_DIR)/server.o $(BUILD_DIR)/client_queue.o
-CLIENT_OBJ = $(BUILD_DIR)/client.o
+# Build the server
+$(SERVER_BIN): $(SERVER_SRC)
+	$(CC) $(CFLAGS) -o $(SERVER_BIN) $(SERVER_SRC)
 
-# Executables
-SERVER = server
-CLIENT = test_client
+# Build the client
+$(CLIENT_BIN): $(CLIENT_SRC)
+	$(CC) $(CFLAGS) -o $(CLIENT_BIN) $(CLIENT_SRC)
 
-.PHONY: all clean run valgrind tsan dirs
+# Build server with ThreadSanitizer for race condition checks
+tsan: $(SERVER_SRC)
+	$(CC) $(TSAN_FLAGS) -o $(SERVER_TSAN_BIN) $(SERVER_SRC)
 
-all: dirs $(SERVER) $(CLIENT)
+# Run Valgrind memory test on the server
+valgrind:
+	valgrind --leak-check=full --show-leak-kinds=all ./$(SERVER_BIN)
 
-dirs:
-	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(STORAGE_DIR)
-
-# Build server
-$(SERVER): $(SERVER_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "✓ Server built successfully"
-
-# Build client
-$(CLIENT): $(CLIENT_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "✓ Client built successfully"
-
-# Compile server source files
-$(BUILD_DIR)/server.o: $(SRC_DIR)/server.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/client_queue.o: $(SRC_DIR)/client_queue.c $(SRC_DIR)/client_queue.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compile client source files
-$(BUILD_DIR)/client.o: $(CLIENT_DIR)/client.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Run server
-run: $(SERVER)
-	./$(SERVER)
-
-# Clean build files
+# Clean all compiled binaries and temporary files
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -f $(SERVER) $(CLIENT)
-	rm -rf $(STORAGE_DIR)
-	@echo "✓ Cleaned build files"
+	rm -f $(SERVER_BIN) $(CLIENT_BIN) $(SERVER_TSAN_BIN)
+	rm -f *.o
+	rm -rf client/client_folders/* server/client_folders/*
 
-# Test with valgrind
-valgrind: $(SERVER)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(SERVER)
+# Run the server
+run-server:
+	./$(SERVER_BIN)
 
-# Test with thread sanitizer (requires recompile)
-tsan:
-	$(MAKE) clean
-	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=thread" LDFLAGS="$(LDFLAGS) -fsanitize=thread"
+# Run the client
+run-client:
+	./$(CLIENT_BIN)
