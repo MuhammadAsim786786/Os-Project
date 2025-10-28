@@ -1,7 +1,3 @@
-// multi-threaded server.c
-// Compile: gcc -o server server.c -pthread
-// Run: ./server
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +16,6 @@
 pthread_mutex_t users_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t files_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/* === utility functions for networking === */
 ssize_t send_all(int sock, const void *buf, size_t len) {
     size_t total = 0; const char *p = buf;
     while (total < len) {
@@ -60,7 +55,6 @@ ssize_t recv_nbytes(int sock, void *buf, size_t n) {
     return (ssize_t)total;
 }
 
-/* === helper utilities === */
 void trim_newline_local(char *s) {
     size_t len = strlen(s);
     while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r')) {
@@ -69,7 +63,6 @@ void trim_newline_local(char *s) {
     }
 }
 
-/* === user management === */
 int authenticate_user(const char *username, const char *password) {
     pthread_mutex_lock(&users_mutex);
     FILE *f = fopen(USERS_FILE, "r");
@@ -109,13 +102,11 @@ int ensure_user_folder(const char *username) {
     return 0;
 }
 
-/* === file operations === */
 void handle_upload(int client_sock, const char *username, const char *filename);
 void handle_download(int client_sock, const char *username, const char *filename);
 void handle_list(int client_sock, const char *username);
 void handle_delete(int client_sock, const char *username, const char *filename);
 
-/* === session handling === */
 void handle_client_session(int client_sock) {
     char line[1024], username[128], password[128], choice[16];
 
@@ -176,7 +167,6 @@ void handle_client_session(int client_sock) {
     printf("[Server] Client %s disconnected\n", username);
 }
 
-/* === file handler implementations === */
 void handle_upload(int client_sock, const char *username, const char *filename) {
     char path[512];
     snprintf(path, sizeof(path), "%s%s/%s", CLIENT_FOLDER, username, filename);
@@ -254,14 +244,12 @@ void handle_delete(int client_sock, const char *username, const char *filename) 
     else send_line(client_sock, "ERROR: cannot delete file");
 }
 
-/* === thread entry === */
 void *client_thread(void *arg) {
     int client_sock = (intptr_t)arg;
     handle_client_session(client_sock);
     return NULL;
 }
 
-/* === main === */
 int main() {
     mkdir(CLIENT_FOLDER, 0777);
 

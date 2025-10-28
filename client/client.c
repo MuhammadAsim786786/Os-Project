@@ -1,7 +1,3 @@
-// client.c
-// Compile: gcc -o client client.c
-// Run: ./client
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,12 +57,10 @@ void trim_newline(char *s) {
     }
 }
 
-/* Build local path: client_folders/<username>/<filename> */
 void build_local_path(char *dest, const char *username, const char *filename) {
     snprintf(dest, 512, "%s%s/%s", CLIENT_FOLDER_BASE, username, filename);
 }
 
-/* Ensure folder exists */
 void ensure_local_user_folder(const char *username) {
     mkdir(CLIENT_FOLDER_BASE, 0777); // base folder
     char path[256];
@@ -74,7 +68,6 @@ void ensure_local_user_folder(const char *username) {
     mkdir(path, 0777);
 }
 
-/* Upload */
 void do_upload(int sock, const char *username, const char *filename) {
     char localpath[512];
     build_local_path(localpath, username, filename);
@@ -102,7 +95,6 @@ void do_upload(int sock, const char *username, const char *filename) {
     printf("%s\n", buf);
 }
 
-/* Download */
 void do_download(int sock, const char *username, const char *filename) {
     char buf[BUFFER_SIZE];
     recv_line(sock, buf, sizeof(buf));
@@ -128,7 +120,6 @@ void do_download(int sock, const char *username, const char *filename) {
     printf("Downloaded to %s\n", localpath);
 }
 
-/* List */
 void do_list(int sock) {
     char buf[BUFFER_SIZE];
     recv_line(sock, buf, sizeof(buf));
@@ -141,7 +132,6 @@ void do_list(int sock) {
     }
 }
 
-/* Delete */
 void do_delete(int sock) {
     char buf[BUFFER_SIZE];
     recv_line(sock, buf, sizeof(buf));
