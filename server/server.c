@@ -113,14 +113,13 @@ client_queue_t client_queue;
 typedef enum { TASK_UPLOAD_MOVE, TASK_DOWNLOAD_SEND, TASK_LIST_SEND, TASK_DELETE_FILE } task_type_t;
 typedef struct task {
     task_type_t type;
-    client_info_t *client; // not owned
+    client_info_t *client; 
     char username[128];
     char filename[512];
-    char tmp_path[1024]; // for upload
-    // completion signaling:
+    char tmp_path[1024];
     pthread_mutex_t done_mutex;
     pthread_cond_t done_cond;
-    int done; // 0 not done, 1 done
+    int done; 
     struct task *next;
 } task_t;
 
